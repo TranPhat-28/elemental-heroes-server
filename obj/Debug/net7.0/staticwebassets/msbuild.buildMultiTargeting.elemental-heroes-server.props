@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\build\elemental-heroes-server.props" />
+</Project>
