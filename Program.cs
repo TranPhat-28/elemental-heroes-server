@@ -3,7 +3,20 @@ global using elemental_heroes_server.Auth;
 using elemental_heroes_server.Data;
 using Microsoft.EntityFrameworkCore;
 
+// Enable CORS
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        policy =>
+        {
+            policy.AllowAnyOrigin();
+        });
+});
 
 // Add services to the container.
 
@@ -21,15 +34,7 @@ builder.Services.AddDbContext<DataContext>(options
 // Service DI
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
-// CORS
-builder.Services.AddCors();
-
 var app = builder.Build();
-app.UseCors(x => x
-    .AllowAnyMethod()
-    .AllowAnyHeader()
-    .SetIsOriginAllowed(origin => true)
-);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -37,6 +42,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Use CORS
+app.UseCors(MyAllowSpecificOrigins);
 
 app.UseHttpsRedirection();
 
