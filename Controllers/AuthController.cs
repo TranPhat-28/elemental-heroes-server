@@ -19,10 +19,18 @@ namespace elemental_heroes_server.Controllers
         }
 
         [HttpPost("Login")]
-        public async Task<ActionResult<ServiceResponse<string>>> Login()
+        public async Task<ActionResult<ServiceResponse<string>>> Login(UserLoginDto request)
         {
-            var result = await _authRepository.Login("email", "password");
-            return Ok(result);
+            var response = await _authRepository.Login(request.Email, request.Password);
+            
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
         }
 
         [HttpPost("Register")]

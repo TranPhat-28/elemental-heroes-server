@@ -20,9 +20,49 @@ namespace elemental_heroes_server.Auth
         public async Task<ServiceResponse<string>> Login(string email, string password)
         {
             var response = new ServiceResponse<string>();
-            response.Data = $"Token for {email}";
 
-            return response;
+            // Check if missing required fields
+            if (email == "" || password == "")
+            {
+                response.IsSuccess = false;
+                response.Message = "Missing required field(s)!";
+                return response;
+            }
+            // Check if Email is valid
+            else if (!EmailIsValid(email))
+            {
+                Console.WriteLine(email);
+                response.IsSuccess = false;
+                response.Message = "Invalid email address!";
+                return response;
+            }
+            // Input fields OK
+            else
+            {
+                // Look for the email in the DB
+                var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
+
+                // If none is found
+                if (user is null)
+                {
+                    response.IsSuccess = false;
+                    response.Message = "Email does not exist!";
+                }
+                // Wrong password
+                else if (!VerifyPasswordHash(password, user.PasswordHash, user.PasswordSalt))
+                {
+                    response.IsSuccess = false;
+                    response.Message = "Incorrect password!";
+                }
+                // Correct password
+                else
+                {
+                    response.Data = user.Id.ToString();
+                    response.Message = "Login success";
+                }
+
+                return response;
+            }
         }
 
         public async Task<ServiceResponse<int>> Register(User user, string password, string confirmPassword)
@@ -38,7 +78,7 @@ namespace elemental_heroes_server.Auth
                 return response;
             }
             // Check if Email is valid
-            else if (EmailIsValid(user.Email))
+            else if (!EmailIsValid(user.Email))
             {
                 response.IsSuccess = false;
                 response.Message = "Invalid email address!";
@@ -93,7 +133,7 @@ namespace elemental_heroes_server.Auth
 
         public bool EmailIsValid(string email)
         {
-            var regex = @"/^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/";
+            var regex = @"^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$";
             if (Regex.Match(email, regex, RegexOptions.IgnoreCase).Success)
             {
                 return true;
@@ -110,6 +150,17 @@ namespace elemental_heroes_server.Auth
             {
                 passwordSalt = hmac.Key;
                 passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(plainPassword));
+            }
+        }
+
+        private bool VerifyPasswordHash(string inputPassword, byte[] passwordHash, byte[] passwordSalt)
+        {
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(passwordSalt))
+            {
+                // Compute the hash of the input password
+                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(inputPassword));
+                // Compare it with the one inside the DB
+                return computedHash.SequenceEqual(passwordHash);
             }
         }
     }
