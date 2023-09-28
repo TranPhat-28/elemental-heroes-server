@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using elemental_heroes_server.Data;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,13 @@ namespace elemental_heroes_server.Auth
             {
                 response.IsSuccess = false;
                 response.Message = "Missing required fields!";
+                return response;
+            }
+            // Check if Email is valid
+            else if (EmailIsValid(user.Email))
+            {
+                response.IsSuccess = false;
+                response.Message = "Invalid email address!";
                 return response;
             }
             // Check if Password and Confirm does not match
@@ -74,6 +82,19 @@ namespace elemental_heroes_server.Auth
         public async Task<bool> UserExists(string email)
         {
             if (await _dataContext.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower()))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public bool EmailIsValid(string email)
+        {
+            var regex = @"/^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/";
+            if (Regex.Match(email, regex, RegexOptions.IgnoreCase).Success)
             {
                 return true;
             }

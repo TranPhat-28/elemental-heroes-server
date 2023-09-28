@@ -21,7 +21,15 @@ builder.Services.AddDbContext<DataContext>(options
 // Service DI
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
+// CORS
+builder.Services.AddCors();
+
 var app = builder.Build();
+app.UseCors(x => x
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .SetIsOriginAllowed(origin => true)
+);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
