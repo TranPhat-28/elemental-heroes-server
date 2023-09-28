@@ -7,8 +7,8 @@ namespace elemental_heroes_server.Auth
 {
     public interface IAuthRepository
     {
-        Task<ServiceResponse<int>> Register(User user, string password);
-        Task<ServiceResponse<string>> Login(string username, string password);
-        Task<bool> UserExists(string username);
+        Task<ServiceResponse<int>> Register(User user, string password, string confirmPassword);
+        Task<ServiceResponse<string>> Login(string email, string password);
+        Task<bool> UserExists(string email);
     }
 }
