@@ -1,20 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using elemental_heroes_server.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace elemental_heroes_server.Auth
 {
     public class AuthRepository : IAuthRepository
     {
         private readonly DataContext _dataContext;
+        private readonly IConfiguration _configuration;
 
-        public AuthRepository(DataContext dataContext)
+        public AuthRepository(DataContext dataContext, IConfiguration configuration)
         {
             _dataContext = dataContext;
+            _configuration = configuration;
         }
 
         public async Task<ServiceResponse<string>> Login(string email, string password)
@@ -57,7 +62,7 @@ namespace elemental_heroes_server.Auth
                 // Correct password
                 else
                 {
-                    response.Data = user.Id.ToString();
+                    response.Data = CreateJWTToken(user);
                     response.Message = "Login success";
                 }
 
@@ -162,6 +167,47 @@ namespace elemental_heroes_server.Auth
                 // Compare it with the one inside the DB
                 return computedHash.SequenceEqual(passwordHash);
             }
+        }
+
+        private string CreateJWTToken(User user)
+        {
+            // The list of Claims
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Email)
+            };
+
+            // Getting the secret from AppSettings
+            var appSettingsToken = _configuration.GetSection("AppSettings:Token").Value;
+
+            // Check if token is null
+            if (appSettingsToken is null)
+            {
+                throw new Exception("AppSettings token is null!");
+            }
+
+            // Symmetric key for the token with secret is the AppSettings token
+            SymmetricSecurityKey key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(appSettingsToken));
+
+            // For signing the token
+            SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+
+            // Storing some information such as Claims and Expiring day for the final token
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.Now.AddDays(1),
+                SigningCredentials = creds
+            };
+
+            // JWT handler
+            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+            // Use the handler to create the token with the tokenDescriptor
+            SecurityToken token = tokenHandler.CreateToken(tokenDescriptor);
+
+            // Write the token
+            return tokenHandler.WriteToken(token);
         }
     }
 }
