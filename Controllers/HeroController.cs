@@ -22,9 +22,7 @@ namespace elemental_heroes_server.Controllers
         [HttpPost]
         public async Task<ActionResult<ServiceResponse<GetHeroDto>>> AddHero(AddHeroDto newHero)
         {
-            AddHeroDto tmp = new AddHeroDto();
-            var response = await _heroService.AddHero(tmp);
-
+            var response = await _heroService.AddHero(newHero);
             return Ok(response);
         }
 

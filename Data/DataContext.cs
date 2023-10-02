@@ -15,5 +15,6 @@ namespace elemental_heroes_server.Data
 
         // This is for the Users table
         public DbSet<User> Users => Set<User>();
+        public DbSet<Hero> Heroes => Set<Hero>();
     }
 }
