@@ -27,7 +27,7 @@ namespace elemental_heroes_server.Services.HeroService
             {
                 _dataContext.Heroes.Add(newHeroObj);
                 await _dataContext.SaveChangesAsync();
-                
+
                 // Return the newly created Hero
                 var createdHero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.Name == newHeroObj.Name);
 
@@ -54,8 +54,34 @@ namespace elemental_heroes_server.Services.HeroService
         public async Task<ServiceResponse<GetHeroDto>> UpdateHero(UpdateHeroDto updateHero)
         {
             var response = new ServiceResponse<GetHeroDto>();
-            response.Message = "Update current Hero";
 
+            try
+            {
+                var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.Name == updateHero.Name);
+                if (hero is null)
+                {
+                    throw new Exception("Cannot find hero");
+                }
+
+                hero.Name = updateHero.Name;
+                hero.Element = updateHero.Element;
+                hero.Hp = updateHero.Hp;
+                hero.Attack = updateHero.Attack;
+                hero.Defense = updateHero.Defense;
+                hero.AttackType = updateHero.AttackType;
+                hero.DamageType = updateHero.DamageType;
+
+                // Save the changes
+                await _dataContext.SaveChangesAsync();
+
+                // Return the newly updated hero
+                response.Data = _mapper.Map<GetHeroDto>(hero);
+            }
+            catch (Exception e)
+            {
+                response.IsSuccess = false;
+                response.Message = e.Message;
+            }
             return response;
         }
     }

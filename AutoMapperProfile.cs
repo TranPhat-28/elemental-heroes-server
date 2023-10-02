@@ -11,7 +11,8 @@ namespace elemental_heroes_server
         public AutoMapperProfile()
         {
             CreateMap<Hero, GetHeroDto>();
-            CreateMap<AddHeroDto, Hero>();   
+            CreateMap<AddHeroDto, Hero>();
+            CreateMap<GetHeroDto, Hero>();   
         }
     }
 }

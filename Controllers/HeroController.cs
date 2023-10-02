@@ -37,9 +37,7 @@ namespace elemental_heroes_server.Controllers
         [HttpPut]
         public async Task<ActionResult<ServiceResponse<GetHeroDto>>> UpdateHero(UpdateHeroDto updateHero)
         {
-            UpdateHeroDto tmp = new UpdateHeroDto();
-            var response = await _heroService.UpdateHero(tmp);
-
+            var response = await _heroService.UpdateHero(updateHero);
             return Ok(response);
         }
     }
