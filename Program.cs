@@ -1,7 +1,9 @@
 global using elemental_heroes_server.Models;
 global using elemental_heroes_server.Auth;
+global using elemental_heroes_server.Models.Enumerable;
 using elemental_heroes_server.Data;
 using Microsoft.EntityFrameworkCore;
+using elemental_heroes_server.Services.HeroService;
 
 // Enable CORS
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -33,6 +35,7 @@ builder.Services.AddDbContext<DataContext>(options
 
 // Service DI
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
+builder.Services.AddScoped<IHeroService, HeroService>();
 
 var app = builder.Build();
 
