@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using elemental_heroes_server.DTOs.HeroDtos;
 using elemental_heroes_server.Services.HeroService;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace elemental_heroes_server.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class HeroController : ControllerBase

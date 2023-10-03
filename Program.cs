@@ -5,6 +5,9 @@ global using AutoMapper;
 using elemental_heroes_server.Data;
 using Microsoft.EntityFrameworkCore;
 using elemental_heroes_server.Services.HeroService;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Cryptography;
+using Microsoft.IdentityModel.Tokens;
 
 // Enable CORS
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -37,6 +40,19 @@ builder.Services.AddDbContext<DataContext>(options
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IHeroService, HeroService>();
 
+// Add JWT
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(
+            builder.Configuration.GetSection("AppSettings:Token").Value!)),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -50,6 +66,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors(MyAllowSpecificOrigins);
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
