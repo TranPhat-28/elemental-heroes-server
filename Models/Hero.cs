@@ -15,5 +15,7 @@ namespace elemental_heroes_server.Models
         public int Defense { get; set; }
         public AttackType AttackType { get; set; }
         public DamageType DamageType { get; set; }
+        public User? User { get; set; }
+        public int UserId { get; set; }
     }
 }
