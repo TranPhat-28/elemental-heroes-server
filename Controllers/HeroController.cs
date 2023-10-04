@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using elemental_heroes_server.DTOs.HeroDtos;
 using elemental_heroes_server.Services.HeroService;
@@ -31,7 +32,9 @@ namespace elemental_heroes_server.Controllers
         [HttpGet]
         public async Task<ActionResult<ServiceResponse<GetHeroDto>>> GetHero()
         {
-            var response = await _heroService.GetHero();
+            // Get the User
+            int userId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)!.Value);
+            var response = await _heroService.GetHero(userId);
 
             return Ok(response);
         }

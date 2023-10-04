@@ -43,7 +43,7 @@ namespace elemental_heroes_server.Services.HeroService
             return response;
         }
 
-        public async Task<ServiceResponse<GetHeroDto>> GetHero()
+        public async Task<ServiceResponse<GetHeroDto>> GetHero(int userId)
         {
             var response = new ServiceResponse<GetHeroDto>();
             response.Message = "Get Hero information";
