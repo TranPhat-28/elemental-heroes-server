@@ -6,7 +6,6 @@ using elemental_heroes_server.Data;
 using Microsoft.EntityFrameworkCore;
 using elemental_heroes_server.Services.HeroService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 
 // Enable CORS
@@ -37,6 +36,7 @@ builder.Services.AddDbContext<DataContext>(options
     => options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreElephantSQL")));
 
 // Service DI
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IHeroService, HeroService>();
 

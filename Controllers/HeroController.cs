@@ -32,10 +32,7 @@ namespace elemental_heroes_server.Controllers
         [HttpGet]
         public async Task<ActionResult<ServiceResponse<GetHeroDto>>> GetHero()
         {
-            // Get the User
-            int userId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)!.Value);
-            var response = await _heroService.GetHero(userId);
-
+            var response = await _heroService.GetHero();
             return Ok(response);
         }
 

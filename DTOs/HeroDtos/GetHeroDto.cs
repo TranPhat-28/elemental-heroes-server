@@ -15,5 +15,6 @@ namespace elemental_heroes_server.DTOs.HeroDtos
         public int Defense { get; set; }
         public AttackType AttackType { get; set; }
         public DamageType DamageType { get; set; }
+        public int UserId { get; set; }
     }
 }

@@ -8,7 +8,7 @@ namespace elemental_heroes_server.Services.HeroService
 {
     public interface IHeroService
     {
-        Task<ServiceResponse<GetHeroDto>> GetHero(int userId);
+        Task<ServiceResponse<GetHeroDto>> GetHero();
         Task<ServiceResponse<GetHeroDto>> AddHero(AddHeroDto newHero);
         Task<ServiceResponse<GetHeroDto>> UpdateHero(UpdateHeroDto updateHero);
     }

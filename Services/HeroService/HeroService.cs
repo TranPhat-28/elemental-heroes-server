@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using elemental_heroes_server.Data;
 using elemental_heroes_server.DTOs.HeroDtos;
@@ -12,11 +13,13 @@ namespace elemental_heroes_server.Services.HeroService
     {
         private readonly DataContext _dataContext;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public HeroService(DataContext dataContext, IMapper mapper)
+        public HeroService(DataContext dataContext, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _dataContext = dataContext;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ServiceResponse<GetHeroDto>> AddHero(AddHeroDto newHero)
@@ -25,11 +28,16 @@ namespace elemental_heroes_server.Services.HeroService
             var newHeroObj = _mapper.Map<Hero>(newHero);
             try
             {
+                // Add the authed UserId to the Obj
+                int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                newHeroObj.UserId = userId;
+
+                // Add to the DB and save changes
                 _dataContext.Heroes.Add(newHeroObj);
                 await _dataContext.SaveChangesAsync();
 
                 // Return the newly created Hero
-                var createdHero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.Name == newHeroObj.Name);
+                var createdHero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
 
                 // Response
                 response.Data = _mapper.Map<GetHeroDto>(createdHero);
@@ -43,10 +51,29 @@ namespace elemental_heroes_server.Services.HeroService
             return response;
         }
 
-        public async Task<ServiceResponse<GetHeroDto>> GetHero(int userId)
+        public async Task<ServiceResponse<GetHeroDto>> GetHero()
         {
             var response = new ServiceResponse<GetHeroDto>();
-            response.Message = "Get Hero information";
+
+            try
+            {
+                int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+
+                if (hero is null)
+                {
+                    response.Message = "No hero found";
+                }
+                else
+                {
+                    response.Data = _mapper.Map<GetHeroDto>(hero);
+                }
+            }
+            catch (Exception e)
+            {
+                response.IsSuccess = false;
+                response.Message = e.Message;
+            }
 
             return response;
         }
@@ -57,7 +84,8 @@ namespace elemental_heroes_server.Services.HeroService
 
             try
             {
-                var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.Name == updateHero.Name);
+                int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
                 if (hero is null)
                 {
                     throw new Exception("Cannot find hero");
