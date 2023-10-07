@@ -26,26 +26,47 @@ namespace elemental_heroes_server.Services.HeroService
         {
             var response = new ServiceResponse<GetHeroDto>();
             var newHeroObj = _mapper.Map<Hero>(newHero);
-            try
+
+
+            if (newHeroObj.Name == "")
             {
-                // Add the authed UserId to the Obj
-                int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                newHeroObj.UserId = userId;
-
-                // Add to the DB and save changes
-                _dataContext.Heroes.Add(newHeroObj);
-                await _dataContext.SaveChangesAsync();
-
-                // Return the newly created Hero
-                var createdHero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
-
-                // Response
-                response.Data = _mapper.Map<GetHeroDto>(createdHero);
-                response.Message = "Hero created successfully";
+                response.IsSuccess = false;
+                response.Message = "Missing Hero name";
+                return response;
             }
-            catch (Exception e)
+            else if (newHeroObj.Attack + newHeroObj.Defense + newHeroObj.Hp > 100)
             {
-                response.Message = e.Message;
+                response.IsSuccess = false;
+                response.Message = "Invalid stats setup";
+                return response;
+            }
+            else
+            {
+                try
+                {
+
+                    // Add the authed UserId to the Obj
+                    int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                    newHeroObj.UserId = userId;
+
+                    // Add to the DB and save changes
+                    _dataContext.Heroes.Add(newHeroObj);
+                    await _dataContext.SaveChangesAsync();
+
+                    // Return the newly created Hero
+                    var createdHero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+
+                    // Response
+                    response.Data = _mapper.Map<GetHeroDto>(createdHero);
+                    response.Message = "Hero created successfully";
+
+                }
+                catch (Exception e)
+                {
+                    response.IsSuccess = false;
+                    response.Message = e.Message;
+                    Console.WriteLine(e.Message);
+                }
             }
 
             return response;
@@ -98,6 +119,35 @@ namespace elemental_heroes_server.Services.HeroService
                 hero.Defense = updateHero.Defense;
                 hero.AttackType = updateHero.AttackType;
                 hero.DamageType = updateHero.DamageType;
+
+                // Save the changes
+                await _dataContext.SaveChangesAsync();
+
+                // Return the newly updated hero
+                response.Data = _mapper.Map<GetHeroDto>(hero);
+            }
+            catch (Exception e)
+            {
+                response.IsSuccess = false;
+                response.Message = e.Message;
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<GetHeroDto>> UpdateHeroName(UpdateHeroNameDto updateHeroName)
+        {
+            var response = new ServiceResponse<GetHeroDto>();
+
+            try
+            {
+                int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+                if (hero is null)
+                {
+                    throw new Exception("Cannot find hero");
+                }
+
+                hero.Name = updateHeroName.Name;
 
                 // Save the changes
                 await _dataContext.SaveChangesAsync();

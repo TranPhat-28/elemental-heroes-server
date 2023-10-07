@@ -26,7 +26,15 @@ namespace elemental_heroes_server.Controllers
         public async Task<ActionResult<ServiceResponse<GetHeroDto>>> AddHero(AddHeroDto newHero)
         {
             var response = await _heroService.AddHero(newHero);
-            return Ok(response);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
         }
 
         [HttpGet]
@@ -36,10 +44,17 @@ namespace elemental_heroes_server.Controllers
             return Ok(response);
         }
 
+        // [HttpPut]
+        // public async Task<ActionResult<ServiceResponse<GetHeroDto>>> UpdateHero(UpdateHeroDto updateHero)
+        // {
+        //     var response = await _heroService.UpdateHero(updateHero);
+        //     return Ok(response);
+        // }
+
         [HttpPut]
-        public async Task<ActionResult<ServiceResponse<GetHeroDto>>> UpdateHero(UpdateHeroDto updateHero)
+        public async Task<ActionResult<ServiceResponse<GetHeroDto>>> UpdateHeroName(UpdateHeroNameDto updateHeroName)
         {
-            var response = await _heroService.UpdateHero(updateHero);
+            var response = await _heroService.UpdateHeroName(updateHeroName);
             return Ok(response);
         }
     }
