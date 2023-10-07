@@ -146,6 +146,10 @@ namespace elemental_heroes_server.Services.HeroService
                 {
                     throw new Exception("Cannot find hero");
                 }
+                else if (updateHeroName.Name == "")
+                {
+                    throw new Exception("Hero name must not be empty");
+                }
 
                 hero.Name = updateHeroName.Name;
 
