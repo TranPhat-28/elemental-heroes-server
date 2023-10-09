@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using elemental_heroes_server.Services.HeroService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using elemental_heroes_server.Services.SkillService;
 
 // Enable CORS
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -39,6 +40,7 @@ builder.Services.AddDbContext<DataContext>(options
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IHeroService, HeroService>();
+builder.Services.AddScoped<ISkillService, SkillService>();
 
 // Add JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
