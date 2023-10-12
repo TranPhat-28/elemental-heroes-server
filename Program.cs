@@ -2,12 +2,13 @@ global using elemental_heroes_server.Models;
 global using elemental_heroes_server.Auth;
 global using elemental_heroes_server.Models.Enumerable;
 global using AutoMapper;
+global using Microsoft.EntityFrameworkCore;
 using elemental_heroes_server.Data;
-using Microsoft.EntityFrameworkCore;
 using elemental_heroes_server.Services.HeroService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using elemental_heroes_server.Services.SkillService;
+using elemental_heroes_server.Services.WeaponService;
 
 // Enable CORS
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -41,6 +42,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 builder.Services.AddScoped<IHeroService, HeroService>();
 builder.Services.AddScoped<ISkillService, SkillService>();
+builder.Services.AddScoped<IWeaponService, WeaponService>();
 
 // Add JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>

@@ -2,29 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using elemental_heroes_server.DTOs.SkillDtos;
-using elemental_heroes_server.Services.SkillService;
-using Microsoft.AspNetCore.Authorization;
+using elemental_heroes_server.DTOs.WeaponDtos;
+using elemental_heroes_server.Services.WeaponService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace elemental_heroes_server.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class SkillController : ControllerBase
+    public class WeaponController : ControllerBase
     {
-        private readonly ISkillService _skillService;
+        private readonly IWeaponService _weaponService;
 
-        public SkillController(ISkillService skillService)
+        public WeaponController(IWeaponService weaponService)
         {
-            _skillService = skillService;
+            _weaponService = weaponService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<ServiceResponse<List<GetSkillDto>>>> GetAllSkills()
+        public async Task<ActionResult<ServiceResponse<List<GetWeaponDto>>>> GetAllWeapons()
         {
-            var response = await _skillService.GetAllSkills();
+            var response = await _weaponService.GetAllWeapons();
 
             if (!response.IsSuccess)
             {
@@ -38,9 +36,9 @@ namespace elemental_heroes_server.Controllers
 
         // User cannot perform this action
         // [HttpPost]
-        // public async Task<ActionResult<ServiceResponse<GetSkillDto>>> AddSkill(AddSkillDto newSkill)
+        // public async Task<ActionResult<ServiceResponse<GetWeaponDto>>> AddSkill(AddWeaponDto newWeapon)
         // {
-        //     var response = await _skillService.AddSkill(newSkill);
+        //     var response = await _weaponService.AddWeapon(newWeapon);
 
         //     if (!response.IsSuccess)
         //     {
