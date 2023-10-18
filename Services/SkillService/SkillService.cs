@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using elemental_heroes_server.Data;
 using elemental_heroes_server.DTOs.SkillDtos;
+using elemental_heroes_server.DTOs.UserSkillDtos;
 
 namespace elemental_heroes_server.Services.SkillService
 {
@@ -11,11 +13,13 @@ namespace elemental_heroes_server.Services.SkillService
     {
         private readonly DataContext _dataContext;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public SkillService(DataContext dataContext, IMapper mapper)
+        public SkillService(DataContext dataContext, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _dataContext = dataContext;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
         public async Task<ServiceResponse<GetSkillDto>> AddSkill(AddSkillDto newSkill)
         {
@@ -50,14 +54,20 @@ namespace elemental_heroes_server.Services.SkillService
             return response;
         }
 
-        public async Task<ServiceResponse<List<GetSkillDto>>> GetAllSkills()
+        public async Task<ServiceResponse<GetOwnedSkillList>> GetAllSkills()
         {
-            var response = new ServiceResponse<List<GetSkillDto>>();
+            var response = new ServiceResponse<GetOwnedSkillList>();
+
+            // Get the authed UserId
+            int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             try
             {
-                var dbSkillList = await _dataContext.Skills.ToListAsync();
-                response.Data = dbSkillList.Select(item => _mapper.Map<GetSkillDto>(item)).ToList();
+                var userData = await _dataContext.Users.Include(u => u.Skills).FirstOrDefaultAsync(u => u.Id == userId);
+                response.Data = _mapper.Map<GetOwnedSkillList>(userData);
+
+                // Number of Skills in total, for rendering
+                response.Data.TotalSkillCount = await _dataContext.Skills.CountAsync();
             }
             catch (Exception e)
             {

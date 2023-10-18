@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using elemental_heroes_server.Data;
+using elemental_heroes_server.DTOs.UserWeaponDtos;
 using elemental_heroes_server.DTOs.WeaponDtos;
 
 namespace elemental_heroes_server.Services.WeaponService
@@ -11,11 +12,13 @@ namespace elemental_heroes_server.Services.WeaponService
     {
         private readonly DataContext _dataContext;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public WeaponService(DataContext dataContext, IMapper mapper)
+        public WeaponService(DataContext dataContext, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _dataContext = dataContext;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ServiceResponse<GetWeaponDto>> AddWeapon(AddWeaponDto newWeapon)
@@ -50,14 +53,20 @@ namespace elemental_heroes_server.Services.WeaponService
             return response;
         }
 
-        public async Task<ServiceResponse<List<GetWeaponDto>>> GetAllWeapons()
+        public async Task<ServiceResponse<GetOwnedWeaponList>> GetAllWeapons()
         {
-            var response = new ServiceResponse<List<GetWeaponDto>>();
+            var response = new ServiceResponse<GetOwnedWeaponList>();
+
+            // Get the authed UserId
+            int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             try
             {
-                var dbWeaponList = await _dataContext.Weapons.ToListAsync();
-                response.Data = dbWeaponList.Select(item => _mapper.Map<GetWeaponDto>(item)).ToList();
+                var userData = await _dataContext.Users.Include(u => u.Weapons).FirstOrDefaultAsync(u => u.Id == userId);
+                response.Data = _mapper.Map<GetOwnedWeaponList>(userData);
+
+                // Number of Weapons in total, for rendering
+                response.Data.TotalWeaponCount = await _dataContext.Weapons.CountAsync();
             }
             catch (Exception e)
             {

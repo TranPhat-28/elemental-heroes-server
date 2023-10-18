@@ -12,6 +12,7 @@ namespace elemental_heroes_server.Models
         public byte[] PasswordHash { get; set; } = new byte[0];
         public byte[] PasswordSalt { get; set; } = new byte[0];
         public Hero? Hero { get; set; }
-        public List<Skill>? SkillsOwned { get; set; }
+        public List<Skill>? Skills { get; set; }
+        public List<Weapon>? Weapons { get; set; }
     }
 }

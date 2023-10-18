@@ -11,5 +11,6 @@ namespace elemental_heroes_server.Models
         public string Name { get; set; } = "New Weapon";
         public Element Element { get; set; } = Element.Fire;
         public string IconUrl { get; set; } = string.Empty;
+        public List<User>? Users { get; set; }
     }
 }

@@ -3,6 +3,7 @@ global using elemental_heroes_server.Auth;
 global using elemental_heroes_server.Models.Enumerable;
 global using AutoMapper;
 global using Microsoft.EntityFrameworkCore;
+global using System.Security.Claims;
 using elemental_heroes_server.Data;
 using elemental_heroes_server.Services.HeroService;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

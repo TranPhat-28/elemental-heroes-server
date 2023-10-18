@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using elemental_heroes_server.DTOs.HeroDtos;
 using elemental_heroes_server.DTOs.SkillDtos;
+using elemental_heroes_server.DTOs.UserSkillDtos;
+using elemental_heroes_server.DTOs.UserWeaponDtos;
 using elemental_heroes_server.DTOs.WeaponDtos;
 
 namespace elemental_heroes_server
@@ -22,6 +24,9 @@ namespace elemental_heroes_server
 
             CreateMap<AddWeaponDto, Weapon>();
             CreateMap<Weapon, GetWeaponDto>();
+
+            CreateMap<User, GetOwnedSkillList>();
+            CreateMap<User, GetOwnedWeaponList>();
         }
     }
 }

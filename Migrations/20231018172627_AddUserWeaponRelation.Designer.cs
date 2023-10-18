@@ -11,8 +11,8 @@ using elemental_heroes_server.Data;
 namespace elemental_heroes_server.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20231018073507_UserSkillRelation")]
-    partial class UserSkillRelation
+    [Migration("20231018172627_AddUserWeaponRelation")]
+    partial class AddUserWeaponRelation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -26,17 +26,32 @@ namespace elemental_heroes_server.Migrations
 
             modelBuilder.Entity("SkillUser", b =>
                 {
-                    b.Property<int>("SkillsOwnedId")
+                    b.Property<int>("SkillsId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("UserId")
+                    b.Property<int>("UsersId")
                         .HasColumnType("integer");
 
-                    b.HasKey("SkillsOwnedId", "UserId");
+                    b.HasKey("SkillsId", "UsersId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UsersId");
 
                     b.ToTable("SkillUser");
+                });
+
+            modelBuilder.Entity("UserWeapon", b =>
+                {
+                    b.Property<int>("UsersId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WeaponsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UsersId", "WeaponsId");
+
+                    b.HasIndex("WeaponsId");
+
+                    b.ToTable("UserWeapon");
                 });
 
             modelBuilder.Entity("elemental_heroes_server.Models.Hero", b =>
@@ -166,13 +181,28 @@ namespace elemental_heroes_server.Migrations
                 {
                     b.HasOne("elemental_heroes_server.Models.Skill", null)
                         .WithMany()
-                        .HasForeignKey("SkillsOwnedId")
+                        .HasForeignKey("SkillsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("elemental_heroes_server.Models.User", null)
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("UserWeapon", b =>
+                {
+                    b.HasOne("elemental_heroes_server.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("elemental_heroes_server.Models.Weapon", null)
+                        .WithMany()
+                        .HasForeignKey("WeaponsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

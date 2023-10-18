@@ -12,11 +12,13 @@ namespace elemental_heroes_server.Services.OpenChestService
     {
         private readonly DataContext _dataContext;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public OpenChestService(DataContext dataContext, IMapper mapper)
+        public OpenChestService(DataContext dataContext, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _dataContext = dataContext;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
         public async Task<ServiceResponse<List<GetSkillDto>>> OpenSkillChest()
         {
@@ -30,11 +32,47 @@ namespace elemental_heroes_server.Services.OpenChestService
             List<int> randomResult = GenerateRandom(itemCount, 1, count);
 
             // Query the Skills to retrieve rows with matching IDs
-            var skills = await _dataContext.Skills.Where(s => randomResult.Contains(s.Id)).ToListAsync();
+            var obtainedSkills = await _dataContext.Skills.Where(s => randomResult.Contains(s.Id)).ToListAsync();
+
+            // Get the authed UserId
+            int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            // Get the User
+            var user = await _dataContext.Users.Include(u => u.Skills).FirstOrDefaultAsync(u => u.Id == userId);
+
+            // Get the list of skill owned
+            List<Skill>? ownedSkills = user!.Skills;
+
+            // If ownedSkills is null
+            if (ownedSkills is null)
+            {
+                user.Skills!.AddRange(obtainedSkills);
+            }
+            // Else check for duplicates before adding
+            else
+            {
+                foreach (Skill obtainedSkill in obtainedSkills)
+                {
+                    int index = ownedSkills.FindIndex(item => item.Id == obtainedSkill.Id);
+                    if (index >= 0)
+                    {
+                        // Element exists then skip
+                        continue;
+                    }
+                    else
+                    {
+                        ownedSkills.Add(obtainedSkill);
+                    }
+                }
+            }
+
+            // Save changes
+            await _dataContext.SaveChangesAsync();
+
 
             var response = new ServiceResponse<List<GetSkillDto>>
             {
-                Data = skills.Select(item => _mapper.Map<GetSkillDto>(item)).ToList()
+                Data = obtainedSkills.Select(item => _mapper.Map<GetSkillDto>(item)).ToList()
             };
 
             return response;
@@ -51,12 +89,48 @@ namespace elemental_heroes_server.Services.OpenChestService
             // Get random
             List<int> randomResult = GenerateRandom(itemCount, 1, count);
 
-            // Query the Weapons to retrieve rows with matching IDs
-            var weapons = await _dataContext.Weapons.Where(w => randomResult.Contains(w.Id)).ToListAsync();
+            // Query the Skills to retrieve rows with matching IDs
+            var obtainedWeapons = await _dataContext.Weapons.Where(w => randomResult.Contains(w.Id)).ToListAsync();
+
+            // Get the authed UserId
+            int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            // Get the User
+            var user = await _dataContext.Users.Include(u => u.Weapons).FirstOrDefaultAsync(u => u.Id == userId);
+
+            // Get the list of skill owned
+            List<Weapon>? ownedWeapons = user!.Weapons;
+
+            // If ownedWeapons is null
+            if (ownedWeapons is null)
+            {
+                user.Weapons!.AddRange(obtainedWeapons);
+            }
+            // Else check for duplicates before adding
+            else
+            {
+                foreach (Weapon obtainedWeapon in obtainedWeapons)
+                {
+                    int index = ownedWeapons.FindIndex(item => item.Id == obtainedWeapon.Id);
+                    if (index >= 0)
+                    {
+                        // Element exists then skip
+                        continue;
+                    }
+                    else
+                    {
+                        ownedWeapons.Add(obtainedWeapon);
+                    }
+                }
+            }
+
+            // Save changes
+            await _dataContext.SaveChangesAsync();
+
 
             var response = new ServiceResponse<List<GetWeaponDto>>
             {
-                Data = weapons.Select(item => _mapper.Map<GetWeaponDto>(item)).ToList()
+                Data = obtainedWeapons.Select(item => _mapper.Map<GetWeaponDto>(item)).ToList()
             };
 
             return response;
