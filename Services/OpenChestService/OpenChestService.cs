@@ -20,6 +20,23 @@ namespace elemental_heroes_server.Services.OpenChestService
             _mapper = mapper;
             _httpContextAccessor = httpContextAccessor;
         }
+
+        public async Task<ServiceResponse<int>> GetUserBalance()
+        {
+            // Get the authed UserId
+            int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            // Get the User
+            var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+            var response = new ServiceResponse<int>
+            {
+                Data = user!.Balance
+            };
+
+            return response;
+        }
+
         public async Task<ServiceResponse<List<GetSkillDto>>> OpenSkillChest()
         {
             // Get the number of skills in total

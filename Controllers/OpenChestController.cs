@@ -38,8 +38,23 @@ namespace elemental_heroes_server.Controllers
         [HttpGet("OpenSkillChest")]
         public async Task<ActionResult<ServiceResponse<int[]>>> OpenSkillChest()
         {
-            
+
             var response = await _openChestService.OpenSkillChest();
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
+
+        [HttpGet("GetBalance")]
+        public async Task<ActionResult<ServiceResponse<int>>> GetUserBalance()
+        {
+            var response = await _openChestService.GetUserBalance();
 
             if (!response.IsSuccess)
             {

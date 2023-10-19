@@ -11,5 +11,6 @@ namespace elemental_heroes_server.Services.OpenChestService
     {
         Task<ServiceResponse<List<GetWeaponDto>>> OpenWeaponChest();
         Task<ServiceResponse<List<GetSkillDto>>> OpenSkillChest();
+        Task<ServiceResponse<int>> GetUserBalance();
     }
 }

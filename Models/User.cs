@@ -14,5 +14,6 @@ namespace elemental_heroes_server.Models
         public Hero? Hero { get; set; }
         public List<Skill>? Skills { get; set; }
         public List<Weapon>? Weapons { get; set; }
+        public int Balance { get; set; } = 1000;
     }
 }
