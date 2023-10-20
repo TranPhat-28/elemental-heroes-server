@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using elemental_heroes_server.Data;
 using elemental_heroes_server.DTOs.HeroDtos;
+using elemental_heroes_server.DTOs.WeaponDtos;
 using Microsoft.EntityFrameworkCore;
 
 namespace elemental_heroes_server.Services.HeroService
@@ -72,6 +73,63 @@ namespace elemental_heroes_server.Services.HeroService
             return response;
         }
 
+        public async Task<ServiceResponse<GetHeroDto>> EquipWeapon(EquipWeaponDto equipWeaponDto)
+        {
+            var response = new ServiceResponse<GetHeroDto>();
+
+            try
+            {
+                // Authed User ID
+                var userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                // Get the User
+                var user = await _dataContext.Users.Include(u => u.Weapons).FirstOrDefaultAsync(u => u.Id == userId);
+
+                // Get the list of weapons owned
+                List<Weapon>? ownedWeapons = user!.Weapons;
+
+                // If ownedWeapons is null
+                if (ownedWeapons is null)
+                {
+                    throw new Exception("You have not collected this weapon yet");
+                }
+                // Else check if user has the weapon
+                int index = ownedWeapons.FindIndex(item => item.Id == equipWeaponDto.WeaponId);
+
+                if (index >= 0)
+                {
+                    // Get the weapon info
+                    var weapon = await _dataContext.Weapons.FirstOrDefaultAsync(w => w.Id == equipWeaponDto.WeaponId);
+                    // Get the hero
+                    var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+                    // If no hero yet
+                    if (hero is null)
+                    {
+                        throw new Exception("Create a hero first before equipping weapon");
+                    }
+                    // Equip the weapon
+                    hero.Weapon = weapon;
+
+                    await _dataContext.SaveChangesAsync();
+
+                    // Return the newly updated hero
+                    response.Data = _mapper.Map<GetHeroDto>(hero);
+                    response.Message = "Weapon is equipped";
+                }
+                else
+                {
+                    throw new Exception("You have not collected this weapon yet");
+                }
+            }
+            catch (Exception e)
+            {
+                response.IsSuccess = false;
+                response.Message = e.Message;
+            }
+
+            return response;
+        }
+
         public async Task<ServiceResponse<GetHeroDto>> GetHero()
         {
             var response = new ServiceResponse<GetHeroDto>();
@@ -79,7 +137,7 @@ namespace elemental_heroes_server.Services.HeroService
             try
             {
                 int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+                var hero = await _dataContext.Heroes.Include(h => h.Weapon).FirstOrDefaultAsync(h => h.UserId == userId);
 
                 if (hero is null)
                 {
@@ -89,6 +147,41 @@ namespace elemental_heroes_server.Services.HeroService
                 {
                     response.Data = _mapper.Map<GetHeroDto>(hero);
                 }
+            }
+            catch (Exception e)
+            {
+                response.IsSuccess = false;
+                response.Message = e.Message;
+            }
+
+            return response;
+        }
+
+        public async Task<ServiceResponse<GetHeroDto>> RemoveWeapon()
+        {
+            var response = new ServiceResponse<GetHeroDto>();
+
+            try
+            {
+                // Authed User ID
+                var userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                // Get the hero
+                var hero = await _dataContext.Heroes.Include(h => h.Weapon).FirstOrDefaultAsync(h => h.UserId == userId);
+
+                // If hero is null
+                if (hero is null)
+                {
+                    throw new Exception("Create a hero first before equipping weapon");
+                }
+
+                // Remove the weapon
+                hero.Weapon = null;
+                await _dataContext.SaveChangesAsync();
+
+                // Return the newly updated hero
+                response.Data = _mapper.Map<GetHeroDto>(hero);
+                response.Message = "Weapon is unequipped";
             }
             catch (Exception e)
             {

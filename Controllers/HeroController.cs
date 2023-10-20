@@ -57,5 +57,35 @@ namespace elemental_heroes_server.Controllers
             var response = await _heroService.UpdateHeroName(updateHeroName);
             return Ok(response);
         }
+
+        [HttpPut("EquipWeapon")]
+        public async Task<ActionResult<ServiceResponse<GetHeroDto>>> EquipWeapon(EquipWeaponDto equipWeaponDto)
+        {
+            var response = await _heroService.EquipWeapon(equipWeaponDto);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
+
+        [HttpPut("RemoveWeapon")]
+        public async Task<ActionResult<ServiceResponse<GetHeroDto>>> RemoveWeaponn()
+        {
+            var response = await _heroService.RemoveWeapon();
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
     }
 }

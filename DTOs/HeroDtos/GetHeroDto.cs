@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using elemental_heroes_server.DTOs.WeaponDtos;
 
 namespace elemental_heroes_server.DTOs.HeroDtos
 {
@@ -16,5 +17,6 @@ namespace elemental_heroes_server.DTOs.HeroDtos
         public AttackType AttackType { get; set; }
         public DamageType DamageType { get; set; }
         public int UserId { get; set; }
+        public GetWeaponDto? Weapon { get; set; }
     }
 }

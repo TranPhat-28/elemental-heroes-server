@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using elemental_heroes_server.DTOs.WeaponDtos;
 
 namespace elemental_heroes_server.Models
 {
@@ -17,5 +18,6 @@ namespace elemental_heroes_server.Models
         public DamageType DamageType { get; set; } = DamageType.Physical;
         public User? User { get; set; }
         public int UserId { get; set; }
+        public Weapon? Weapon { get; set; }
     }
 }
