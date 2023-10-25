@@ -109,6 +109,17 @@ namespace elemental_heroes_server.Services.HeroService
                     }
                     // Equip the weapon
                     hero.Weapon = weapon;
+                    // Apply the bonus stat
+                    if (hero.Element == weapon!.Element)
+                    {
+                        hero.BonusHp = 40;
+                        hero.BonusDefense = 20;
+                    }
+                    else
+                    {
+                        hero.BonusHp = 0;
+                        hero.BonusDefense = 0;
+                    }
 
                     await _dataContext.SaveChangesAsync();
 
@@ -178,6 +189,10 @@ namespace elemental_heroes_server.Services.HeroService
                 // Remove the weapon
                 hero.Weapon = null;
                 await _dataContext.SaveChangesAsync();
+
+                // Remove bonus stats
+                hero.BonusHp = 0;
+                hero.BonusDefense = 0;
 
                 // Return the newly updated hero
                 response.Data = _mapper.Map<GetHeroDto>(hero);
