@@ -34,5 +34,20 @@ namespace elemental_heroes_server.Controllers
                 return Ok(response);
             }
         }
+
+        [HttpGet("GetSingleplayerMatchResult")]
+        public async Task<ActionResult<ServiceResponse<GetSingleplayerMatchResultDto>>> GetSingleplayerMatchResult()
+        {
+            var response = await _gameService.GetSingleplayerMatchResult();
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
     }
 }
