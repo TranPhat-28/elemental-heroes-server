@@ -101,7 +101,7 @@ namespace elemental_heroes_server.Services.HeroService
                     // Get the skill info
                     var skill = await _dataContext.Skills.FirstOrDefaultAsync(s => s.Id == equipSkillDto.SkillId);
                     // Get the hero
-                    var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+                    var hero = await _dataContext.Heroes.Include(h => h.Weapon).FirstOrDefaultAsync(h => h.UserId == userId);
                     // If no hero yet
                     if (hero is null)
                     {
@@ -141,6 +141,18 @@ namespace elemental_heroes_server.Services.HeroService
                     if (hero.Element == skill!.Element)
                     {
                         hero.BonusAttack += 10;
+                    }
+
+                    // Apply the bonus Attack Type stat
+                    if (hero.AttackType == skill!.AttackType)
+                    {
+                        hero.BonusAttack += 5;
+                    }
+
+                    // Apply the bonus Damage Type stat
+                    if (hero.DamageType == skill!.DamageType)
+                    {
+                        hero.BonusAttack += 5;
                     }
 
                     await _dataContext.SaveChangesAsync();
@@ -191,7 +203,7 @@ namespace elemental_heroes_server.Services.HeroService
                     // Get the weapon info
                     var weapon = await _dataContext.Weapons.FirstOrDefaultAsync(w => w.Id == equipWeaponDto.WeaponId);
                     // Get the hero
-                    var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+                    var hero = await _dataContext.Heroes.Include(h => h.Weapon).Include(h => h.SkillA).Include(h => h.SkillB).Include(h => h.SkillC).FirstOrDefaultAsync(h => h.UserId == userId);
                     // If no hero yet
                     if (hero is null)
                     {
@@ -268,7 +280,7 @@ namespace elemental_heroes_server.Services.HeroService
                 var userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
                 // Get the hero
-                var hero = await _dataContext.Heroes.Include(h => h.SkillA).Include(h => h.SkillB).Include(h => h.SkillC).FirstOrDefaultAsync(h => h.UserId == userId);
+                var hero = await _dataContext.Heroes.Include(h => h.Weapon).Include(h => h.SkillA).Include(h => h.SkillB).Include(h => h.SkillC).FirstOrDefaultAsync(h => h.UserId == userId);
 
                 // If hero is null
                 if (hero is null)
@@ -286,6 +298,14 @@ namespace elemental_heroes_server.Services.HeroService
                             {
                                 hero.BonusAttack -= 10;
                             }
+                            if (hero.AttackType == hero.SkillA!.AttackType)
+                            {
+                                hero.BonusAttack -= 5;
+                            }
+                            if (hero.DamageType == hero.SkillA!.DamageType)
+                            {
+                                hero.BonusAttack -= 5;
+                            }
                             hero.SkillA = null;
                         }
                         break;
@@ -296,6 +316,14 @@ namespace elemental_heroes_server.Services.HeroService
                             {
                                 hero.BonusAttack -= 10;
                             }
+                            if (hero.AttackType == hero.SkillB!.AttackType)
+                            {
+                                hero.BonusAttack -= 5;
+                            }
+                            if (hero.DamageType == hero.SkillB!.DamageType)
+                            {
+                                hero.BonusAttack -= 5;
+                            }
                             hero.SkillB = null;
                         }
                         break;
@@ -305,6 +333,14 @@ namespace elemental_heroes_server.Services.HeroService
                             if (hero.Element == hero.SkillC.Element)
                             {
                                 hero.BonusAttack -= 10;
+                            }
+                            if (hero.AttackType == hero.SkillC!.AttackType)
+                            {
+                                hero.BonusAttack -= 5;
+                            }
+                            if (hero.DamageType == hero.SkillC!.DamageType)
+                            {
+                                hero.BonusAttack -= 5;
                             }
                             hero.SkillC = null;
                         }
@@ -337,7 +373,7 @@ namespace elemental_heroes_server.Services.HeroService
                 var userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
                 // Get the hero
-                var hero = await _dataContext.Heroes.Include(h => h.Weapon).FirstOrDefaultAsync(h => h.UserId == userId);
+                var hero = await _dataContext.Heroes.Include(h => h.Weapon).Include(h => h.SkillA).Include(h => h.SkillB).Include(h => h.SkillC).FirstOrDefaultAsync(h => h.UserId == userId);
 
                 // If hero is null
                 if (hero is null)
