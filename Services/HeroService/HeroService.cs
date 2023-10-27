@@ -73,6 +73,96 @@ namespace elemental_heroes_server.Services.HeroService
             return response;
         }
 
+        public async Task<ServiceResponse<GetHeroDto>> EquipSkill(EquipSkillDto equipSkillDto)
+        {
+            var response = new ServiceResponse<GetHeroDto>();
+
+            try
+            {
+                // Authed User ID
+                var userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                // Get the User
+                var user = await _dataContext.Users.Include(u => u.Skills).FirstOrDefaultAsync(u => u.Id == userId);
+
+                // Get the list of skills owned
+                List<Skill>? ownedSkills = user!.Skills;
+
+                // If ownedSkills is null
+                if (ownedSkills is null)
+                {
+                    throw new Exception("You have not collected this skill yet");
+                }
+                // Else check if user has the skill
+                int index = ownedSkills.FindIndex(item => item.Id == equipSkillDto.SkillId);
+
+                if (index >= 0)
+                {
+                    // Get the skill info
+                    var skill = await _dataContext.Skills.FirstOrDefaultAsync(s => s.Id == equipSkillDto.SkillId);
+                    // Get the hero
+                    var hero = await _dataContext.Heroes.FirstOrDefaultAsync(h => h.UserId == userId);
+                    // If no hero yet
+                    if (hero is null)
+                    {
+                        throw new Exception("Create a hero first before equipping skill");
+                    }
+
+                    // Equip the weapon to the corresponding slot
+                    switch (equipSkillDto.Slot)
+                    {
+                        // For now, do not allow to equip to an existing slot
+                        case 1:
+                            if (hero.SkillA != null)
+                            {
+                                throw new Exception("Please unequip the skill in the slot first");
+                            }
+                            hero.SkillA = skill;
+                            break;
+                        case 2:
+                            if (hero.SkillB != null)
+                            {
+                                throw new Exception("Please unequip the skill in the slot first");
+                            }
+                            hero.SkillB = skill;
+                            break;
+                        case 3:
+                            if (hero.SkillC != null)
+                            {
+                                throw new Exception("Please unequip the skill in the slot first");
+                            }
+                            hero.SkillC = skill;
+                            break;
+                        default:
+                            throw new Exception("Invalid skill slot");
+                    }
+
+                    // Apply the bonus Element stat
+                    if (hero.Element == skill!.Element)
+                    {
+                        hero.BonusAttack += 10;
+                    }
+
+                    await _dataContext.SaveChangesAsync();
+
+                    // Return the newly updated hero
+                    response.Data = _mapper.Map<GetHeroDto>(hero);
+                    response.Message = "Skill is equipped";
+                }
+                else
+                {
+                    throw new Exception("You have not collected this skill yet");
+                }
+            }
+            catch (Exception e)
+            {
+                response.IsSuccess = false;
+                response.Message = e.Message;
+            }
+
+            return response;
+        }
+
         public async Task<ServiceResponse<GetHeroDto>> EquipWeapon(EquipWeaponDto equipWeaponDto)
         {
             var response = new ServiceResponse<GetHeroDto>();
@@ -148,7 +238,7 @@ namespace elemental_heroes_server.Services.HeroService
             try
             {
                 int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-                var hero = await _dataContext.Heroes.Include(h => h.Weapon).FirstOrDefaultAsync(h => h.UserId == userId);
+                var hero = await _dataContext.Heroes.Include(h => h.Weapon).Include(h => h.SkillA).Include(h => h.SkillB).Include(h => h.SkillC).FirstOrDefaultAsync(h => h.UserId == userId);
 
                 if (hero is null)
                 {
@@ -158,6 +248,75 @@ namespace elemental_heroes_server.Services.HeroService
                 {
                     response.Data = _mapper.Map<GetHeroDto>(hero);
                 }
+            }
+            catch (Exception e)
+            {
+                response.IsSuccess = false;
+                response.Message = e.Message;
+            }
+
+            return response;
+        }
+
+        public async Task<ServiceResponse<GetHeroDto>> RemoveSkill(RemoveSkillDto removeSkillDto)
+        {
+            var response = new ServiceResponse<GetHeroDto>();
+
+            try
+            {
+                // Authed User ID
+                var userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+                // Get the hero
+                var hero = await _dataContext.Heroes.Include(h => h.SkillA).Include(h => h.SkillB).Include(h => h.SkillC).FirstOrDefaultAsync(h => h.UserId == userId);
+
+                // If hero is null
+                if (hero is null)
+                {
+                    throw new Exception("Create a hero first before unequipping skill");
+                }
+
+                // Remove the skill and unapply the bonus stat
+                switch (removeSkillDto.Slot)
+                {
+                    case 1:
+                        if (hero.SkillA != null)
+                        {
+                            if (hero.Element == hero.SkillA.Element)
+                            {
+                                hero.BonusAttack -= 10;
+                            }
+                            hero.SkillA = null;
+                        }
+                        break;
+                    case 2:
+                        if (hero.SkillB != null)
+                        {
+                            if (hero.Element == hero.SkillB.Element)
+                            {
+                                hero.BonusAttack -= 10;
+                            }
+                            hero.SkillB = null;
+                        }
+                        break;
+                    case 3:
+                        if (hero.SkillC != null)
+                        {
+                            if (hero.Element == hero.SkillC.Element)
+                            {
+                                hero.BonusAttack -= 10;
+                            }
+                            hero.SkillC = null;
+                        }
+                        break;
+                    default:
+                        throw new Exception("Invalid skill slot");
+                }
+                await _dataContext.SaveChangesAsync();
+
+                // Return the newly updated hero
+                response.Data = _mapper.Map<GetHeroDto>(hero);
+                response.Message = "Skill is unequipped";
             }
             catch (Exception e)
             {
@@ -183,7 +342,7 @@ namespace elemental_heroes_server.Services.HeroService
                 // If hero is null
                 if (hero is null)
                 {
-                    throw new Exception("Create a hero first before equipping weapon");
+                    throw new Exception("Create a hero first before unequipping weapon");
                 }
 
                 // Remove the weapon

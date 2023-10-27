@@ -87,5 +87,35 @@ namespace elemental_heroes_server.Controllers
                 return Ok(response);
             }
         }
+
+        [HttpPut("EquipSkill")]
+        public async Task<ActionResult<ServiceResponse<GetHeroDto>>> EquipSkill(EquipSkillDto equipSkillDto)
+        {
+            var response = await _heroService.EquipSkill(equipSkillDto);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
+
+        [HttpPut("RemoveSkill")]
+        public async Task<ActionResult<ServiceResponse<GetHeroDto>>> RemoveSkill(RemoveSkillDto removeSkillDto)
+        {
+            var response = await _heroService.RemoveSkill(removeSkillDto);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(response);
+            }
+            else
+            {
+                return Ok(response);
+            }
+        }
     }
 }

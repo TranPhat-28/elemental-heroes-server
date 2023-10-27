@@ -14,5 +14,7 @@ namespace elemental_heroes_server.Services.HeroService
         Task<ServiceResponse<GetHeroDto>> UpdateHeroName(UpdateHeroNameDto updateHeroName);
         Task<ServiceResponse<GetHeroDto>> EquipWeapon(EquipWeaponDto equipWeaponDto);
         Task<ServiceResponse<GetHeroDto>> RemoveWeapon();
+        Task<ServiceResponse<GetHeroDto>> EquipSkill(EquipSkillDto equipSkillDto);
+        Task<ServiceResponse<GetHeroDto>> RemoveSkill(RemoveSkillDto removeSkillDto);
     }
 }

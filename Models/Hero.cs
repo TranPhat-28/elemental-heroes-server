@@ -21,5 +21,8 @@ namespace elemental_heroes_server.Models
         public User? User { get; set; }
         public int UserId { get; set; }
         public Weapon? Weapon { get; set; }
+        public Skill? SkillA { get; set; }
+        public Skill? SkillB { get; set; }
+        public Skill? SkillC { get; set; }
     }
 }
