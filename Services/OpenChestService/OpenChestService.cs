@@ -199,7 +199,7 @@ namespace elemental_heroes_server.Services.OpenChestService
         }
 
         // For generating random number
-        private List<int> GenerateRandom(int n, int min, int max)
+        public List<int> GenerateRandom(int n, int min, int max)
         {
             if (n > (max - min + 1))
             {

@@ -10,7 +10,7 @@ namespace elemental_heroes_server.Services.GameService
     {
         // Singleplayer
         Task<ServiceResponse<GetBotHeroDto>> GetBotHeroData();
-        Task<ServiceResponse<GetSingleplayerMatchResultDto>> GetSingleplayerMatchResult();
+        Task<ServiceResponse<GetSingleplayerMatchResultDto>> GetSingleplayerMatchResult(GetBotHeroDto botHeroData);
         // Challenge a friend
     }
 }

@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using elemental_heroes_server.Data;
-using elemental_heroes_server.DTOs.GameDtos;
+using elemental_heroes_server.DTOs.HeroDtos;
+using elemental_heroes_server.DTOs.SkillDtos;
 
 namespace elemental_heroes_server.Services.GameService
 {
@@ -11,11 +12,13 @@ namespace elemental_heroes_server.Services.GameService
     {
         private readonly DataContext _dataContext;
         private readonly IMapper _mapper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public GameService(DataContext dataContext, IMapper mapper)
+        public GameService(DataContext dataContext, IMapper mapper, IHttpContextAccessor httpContextAccessor)
         {
             _dataContext = dataContext;
             _mapper = mapper;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<ServiceResponse<GetBotHeroDto>> GetBotHeroData()
@@ -33,21 +36,40 @@ namespace elemental_heroes_server.Services.GameService
                 // Get random Weapon for the bot
                 int randomWeapon = random.Next(1, 11);
                 var weapon = await _dataContext.Weapons.FirstOrDefaultAsync(w => w.Id == randomWeapon);
-            
-            var mockData = new GetBotHeroDto
-            {
-                Name = GetRandomBotName(),
-                Element = (Element)randomElement,
-                Hp = GetRandomBotStat(3, 5),
-                Attack = GetRandomBotStat(3, 6),
-                Defense = GetRandomBotStat(3, 6),
-                BonusHp = GetRandomBotStat(3, 6),
-                BonusAttack = GetRandomBotStat(3, 6),
-                BonusDefense = GetRandomBotStat(3, 6),
-                AttackType = (AttackType)randomAttackType,
-                DamageType = (DamageType)randomDamageType,
-                Weapon = _mapper.Map<GetWeaponDto>(weapon),
-            };
+
+                // Get 3 random Skills for the bot
+                List<int> randomResult = new List<int>();
+                while (randomResult.Count < 3)
+                {
+                    int randomNumber = random.Next(1, 20 + 1);
+
+                    if (!randomResult.Contains(randomNumber))
+                    {
+                        randomResult.Add(randomNumber);
+                    }
+                }
+
+                var skillA = await _dataContext.Skills.FirstOrDefaultAsync(s => s.Id == randomResult[0]);
+                var skillB = await _dataContext.Skills.FirstOrDefaultAsync(s => s.Id == randomResult[1]);
+                var skillC = await _dataContext.Skills.FirstOrDefaultAsync(s => s.Id == randomResult[2]);
+
+                var mockData = new GetBotHeroDto
+                {
+                    Name = GetRandomBotName(),
+                    Element = (Element)randomElement,
+                    Hp = GetRandomBotStat(3, 5),
+                    Attack = GetRandomBotStat(3, 5),
+                    Defense = GetRandomBotStat(3, 5),
+                    BonusHp = GetRandomBotStat(1, 3),
+                    BonusAttack = GetRandomBotStat(1, 3),
+                    BonusDefense = GetRandomBotStat(1, 3),
+                    AttackType = (AttackType)randomAttackType,
+                    DamageType = (DamageType)randomDamageType,
+                    Weapon = _mapper.Map<GetWeaponDto>(weapon),
+                    SkillA = _mapper.Map<GetSkillDto>(skillA),
+                    SkillB = _mapper.Map<GetSkillDto>(skillB),
+                    SkillC = _mapper.Map<GetSkillDto>(skillC),
+                };
 
                 response.Data = mockData;
             }
@@ -60,14 +82,251 @@ namespace elemental_heroes_server.Services.GameService
             return response;
         }
 
-        public async Task<ServiceResponse<GetSingleplayerMatchResultDto>> GetSingleplayerMatchResult()
+        public async Task<ServiceResponse<GetSingleplayerMatchResultDto>> GetSingleplayerMatchResult(GetBotHeroDto botHeroData)
         {
             var response = new ServiceResponse<GetSingleplayerMatchResultDto>();
 
-            response.Data = new GetSingleplayerMatchResultDto
+            try
             {
-                PlayerVictory = true,
-            };
+                // Fetch the Hero
+                int userId = int.Parse(_httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                var hero = await _dataContext.Heroes.Include(h => h.Weapon).Include(h => h.SkillA).Include(h => h.SkillB).Include(h => h.SkillC).FirstOrDefaultAsync(h => h.UserId == userId);
+
+                // If null hero
+                if (hero is null)
+                {
+                    throw new Exception("Create a hero before playing");
+                }
+
+                // Calculate game result - a list of TurnResult
+                List<SingleplayerTurnResult> gameResult = new List<SingleplayerTurnResult>();
+
+                bool gameOver = false;
+                int turnCount = 1;
+
+                // Player and Bot stat
+                int PlayerHp = hero.Hp + hero.BonusHp;
+                int PlayerAtk = hero.Attack + hero.BonusAttack;
+                int PlayerDef = hero.Defense + hero.BonusDefense;
+
+                int BotHp = botHeroData.Hp + botHeroData.BonusHp;
+                int BotAtk = botHeroData.Attack + botHeroData.BonusAttack;
+                int BotDef = botHeroData.Defense + botHeroData.BonusDefense;
+
+                bool PlayerVictory = false;
+
+                // Loop to calculate result
+                // In singleplayer, Player always go first
+                while (!gameOver)
+                {
+                    SingleplayerTurnResult turnResult = new SingleplayerTurnResult();
+
+                    // Turn no
+                    turnResult.TurnNo = turnCount;
+
+                    // Init HP
+                    turnResult.PlayerInitHp = PlayerHp;
+                    turnResult.BotInitHp = BotHp;
+
+                    // Damage dealt
+                    int playerDealt;
+                    int botDealt;
+
+                    switch (turnCount)
+                    {
+                        case 1:
+                            // Skill A
+
+                            // Player Damage
+                            if (hero.SkillA is not null)
+                            {
+                                playerDealt = PlayerAtk * hero.SkillA.Damage / 100 - BotDef;
+                            }
+                            else
+                            {
+                                playerDealt = PlayerAtk - BotDef;
+                            }
+                            if (playerDealt <= 0)
+                            {
+                                turnResult.PlayerDamageDealt = 0;
+                            }
+                            else
+                            {
+                                turnResult.PlayerDamageDealt = playerDealt;
+                            }
+                            turnResult.BotRemainingHp = turnResult.BotInitHp - playerDealt;
+
+                            // Bot Damage
+                            if (botHeroData.SkillA is not null)
+                            {
+                                botDealt = BotAtk * botHeroData.SkillA.Damage / 100 - PlayerDef;
+                            }
+                            else
+                            {
+                                botDealt = BotAtk - PlayerDef;
+                            }
+                            if (botDealt <= 0)
+                            {
+                                turnResult.BotDamageDealt = 0;
+                            }
+                            else
+                            {
+                                turnResult.BotDamageDealt = botDealt;
+                            }
+                            turnResult.PlayerRemainingHp = turnResult.PlayerInitHp - botDealt;
+
+                            break;
+                        case 2:
+                            // Skill B
+
+                            // Player Damage
+                            if (hero.SkillB is not null)
+                            {
+                                playerDealt = PlayerAtk * hero.SkillB.Damage / 100 - BotDef;
+                            }
+                            else
+                            {
+                                playerDealt = PlayerAtk - BotDef;
+                            }
+                            if (playerDealt <= 0)
+                            {
+                                turnResult.PlayerDamageDealt = 0;
+                            }
+                            else
+                            {
+                                turnResult.PlayerDamageDealt = playerDealt;
+                            }
+                            turnResult.BotRemainingHp = turnResult.BotInitHp - playerDealt;
+
+                            // Bot Damage
+                            if (botHeroData.SkillB is not null)
+                            {
+                                botDealt = BotAtk * botHeroData.SkillB.Damage / 100 - PlayerDef;
+                            }
+                            else
+                            {
+                                botDealt = BotAtk - PlayerDef;
+                            }
+                            if (botDealt <= 0)
+                            {
+                                turnResult.BotDamageDealt = 0;
+                            }
+                            else
+                            {
+                                turnResult.BotDamageDealt = botDealt;
+                            }
+                            turnResult.PlayerRemainingHp = turnResult.PlayerInitHp - botDealt;
+
+                            break;
+                        case 3:
+                            // Skill C
+
+                            // Player Damage
+                            if (hero.SkillC is not null)
+                            {
+                                playerDealt = PlayerAtk * hero.SkillC.Damage / 100 - BotDef;
+                            }
+                            else
+                            {
+                                playerDealt = PlayerAtk - BotDef;
+                            }
+                            if (playerDealt <= 0)
+                            {
+                                turnResult.PlayerDamageDealt = 0;
+                            }
+                            else
+                            {
+                                turnResult.PlayerDamageDealt = playerDealt;
+                            }
+                            turnResult.BotRemainingHp = turnResult.BotInitHp - playerDealt;
+
+                            // Bot Damage
+                            if (botHeroData.SkillC is not null)
+                            {
+                                botDealt = BotAtk * botHeroData.SkillC.Damage / 100 - PlayerDef;
+                            }
+                            else
+                            {
+                                botDealt = BotAtk - PlayerDef;
+                            }
+                            if (botDealt <= 0)
+                            {
+                                turnResult.BotDamageDealt = 0;
+                            }
+                            else
+                            {
+                                turnResult.BotDamageDealt = botDealt;
+                            }
+                            turnResult.PlayerRemainingHp = turnResult.PlayerInitHp - botDealt;
+
+                            break;
+                        default:
+                            // Default attack
+
+                            // Player Damage
+                            playerDealt = PlayerAtk - BotDef;
+                            if (playerDealt <= 0)
+                            {
+                                turnResult.PlayerDamageDealt = 0;
+                            }
+                            else
+                            {
+                                turnResult.PlayerDamageDealt = playerDealt;
+                            }
+                            turnResult.BotRemainingHp = turnResult.BotInitHp - playerDealt;
+
+                            // Bot Damage
+                            botDealt = BotAtk - PlayerDef;
+                            if (botDealt <= 0)
+                            {
+                                turnResult.BotDamageDealt = 0;
+                            }
+                            else
+                            {
+                                turnResult.BotDamageDealt = botDealt;
+                            }
+                            turnResult.PlayerRemainingHp = turnResult.PlayerInitHp - botDealt;
+
+                            break;
+                    }
+
+                    // Push the result to the list
+                    gameResult.Add(turnResult);
+
+                    // Update HP
+                    PlayerHp = turnResult.PlayerRemainingHp;
+                    BotHp = turnResult.BotRemainingHp;
+
+                    // Check gameOver
+                    if (PlayerHp <= 0)
+                    {
+                        PlayerVictory = false;
+                        gameOver = true;
+                    }
+                    else if (BotHp <= 0)
+                    {
+                        PlayerVictory = true;
+                        gameOver = true;
+                    }
+
+                    // Next turn
+                    turnCount++;
+                }
+
+                // Finish the response
+                response.Data = new GetSingleplayerMatchResultDto
+                {
+                    UserHeroData = _mapper.Map<GetHeroDto>(hero),
+                    BotData = botHeroData,
+                    PlayerVictory = PlayerVictory,
+                    GameResult = gameResult
+                };
+            }
+            catch (Exception e)
+            {
+                response.IsSuccess = false;
+                response.Message = e.Message;
+            }
 
             return response;
         }

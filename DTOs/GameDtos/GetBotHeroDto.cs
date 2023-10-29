@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using elemental_heroes_server.DTOs.SkillDtos;
 
 namespace elemental_heroes_server.DTOs.GameDtos
 {
@@ -18,5 +19,8 @@ namespace elemental_heroes_server.DTOs.GameDtos
         public AttackType AttackType { get; set; }
         public DamageType DamageType { get; set; }
         public GetWeaponDto? Weapon { get; set; }
+        public GetSkillDto? SkillA { get; set; }
+        public GetSkillDto? SkillB { get; set; }
+        public GetSkillDto? SkillC { get; set; }
     }
 }

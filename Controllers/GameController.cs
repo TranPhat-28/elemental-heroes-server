@@ -35,10 +35,10 @@ namespace elemental_heroes_server.Controllers
             }
         }
 
-        [HttpGet("GetSingleplayerMatchResult")]
-        public async Task<ActionResult<ServiceResponse<GetSingleplayerMatchResultDto>>> GetSingleplayerMatchResult()
+        [HttpPost("GetSingleplayerMatchResult")]
+        public async Task<ActionResult<ServiceResponse<GetSingleplayerMatchResultDto>>> GetSingleplayerMatchResult(GetBotHeroDto botHeroData)
         {
-            var response = await _gameService.GetSingleplayerMatchResult();
+            var response = await _gameService.GetSingleplayerMatchResult(botHeroData);
 
             if (!response.IsSuccess)
             {
