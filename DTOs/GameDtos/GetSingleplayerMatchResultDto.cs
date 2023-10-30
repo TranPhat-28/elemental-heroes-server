@@ -11,6 +11,7 @@ namespace elemental_heroes_server.DTOs.GameDtos
         public GetHeroDto UserHeroData { get; set; } = new GetHeroDto();
         public GetBotHeroDto BotData { get; set; } = new GetBotHeroDto();
         public bool PlayerVictory { get; set; }
+        public int Reward { get; set; } = 0;
         public List<SingleplayerTurnResult> GameResult { get; set; } = new List<SingleplayerTurnResult>();
     }
 }

@@ -27,7 +27,7 @@ namespace elemental_heroes_server.Services.GameService
 
             try
             {
-                // Generate a random number between 1 and 5
+                // Generate random Element, AttackType and DamageType
                 Random random = new Random();
                 int randomElement = random.Next(1, 6);
                 int randomAttackType = random.Next(1, 3);
@@ -37,11 +37,14 @@ namespace elemental_heroes_server.Services.GameService
                 int randomWeapon = random.Next(1, 11);
                 var weapon = await _dataContext.Weapons.FirstOrDefaultAsync(w => w.Id == randomWeapon);
 
+                // Get the number of skills in total
+                var skillsCount = await _dataContext.Skills.CountAsync();
+
                 // Get 3 random Skills for the bot
                 List<int> randomResult = new List<int>();
                 while (randomResult.Count < 3)
                 {
-                    int randomNumber = random.Next(1, 20 + 1);
+                    int randomNumber = random.Next(1, skillsCount + 1);
 
                     if (!randomResult.Contains(randomNumber))
                     {
@@ -53,7 +56,7 @@ namespace elemental_heroes_server.Services.GameService
                 var skillB = await _dataContext.Skills.FirstOrDefaultAsync(s => s.Id == randomResult[1]);
                 var skillC = await _dataContext.Skills.FirstOrDefaultAsync(s => s.Id == randomResult[2]);
 
-                var mockData = new GetBotHeroDto
+                var botData = new GetBotHeroDto
                 {
                     Name = GetRandomBotName(),
                     Element = (Element)randomElement,
@@ -71,7 +74,7 @@ namespace elemental_heroes_server.Services.GameService
                     SkillC = _mapper.Map<GetSkillDto>(skillC),
                 };
 
-                response.Data = mockData;
+                response.Data = botData;
             }
             catch (Exception e)
             {
@@ -313,13 +316,27 @@ namespace elemental_heroes_server.Services.GameService
                     turnCount++;
                 }
 
+                // Calculate the reward
+                int reward;
+                if (PlayerVictory){
+                    reward = 300;
+                }
+                else {
+                    reward = 100;
+                }
+
+                // Add the reward
+                var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+                user!.Balance += reward;
+
                 // Finish the response
                 response.Data = new GetSingleplayerMatchResultDto
                 {
                     UserHeroData = _mapper.Map<GetHeroDto>(hero),
                     BotData = botHeroData,
                     PlayerVictory = PlayerVictory,
-                    GameResult = gameResult
+                    GameResult = gameResult,
+                    Reward = reward
                 };
             }
             catch (Exception e)
