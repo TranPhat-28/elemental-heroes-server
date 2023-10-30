@@ -329,6 +329,8 @@ namespace elemental_heroes_server.Services.GameService
                 var user = await _dataContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
                 user!.Balance += reward;
 
+                await _dataContext.SaveChangesAsync();
+
                 // Finish the response
                 response.Data = new GetSingleplayerMatchResultDto
                 {
